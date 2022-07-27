@@ -1,0 +1,66 @@
+version: '3'
+services:
+    dev_test_project:
+#        image: psolutions/ubuntu-php-development
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: dev_test_project
+        hostname: dev.oknovibeograd.rs
+        entrypoint:
+            - /bin/bash
+        volumes:
+            - .:/opt/app
+        stdin_open: true
+        tty: true
+        ports:
+            - 8000:8000
+            - 8080:8080
+        depends_on:
+            - mariadb_test_project
+        environment:
+            DATABASE_URL: "mysql://test_project:Jp7NfgMNzsZlJlXrrSU4InjaNyMJKSKad0SH1NuGY@mariadb_test_project:3306/test_project_development"
+            APP_SECRET: Hdlb6wIBIQNvyobNiBuAYJ9q4aFP8fubsloMMSxk4WnNjVPsIDdGGEShYCeihMQ
+            MAILER_URL: null://localhost
+    mariadb_test_project:
+        container_name: mariadb_test_project
+        #image: psolutions/mariadb
+        image: mysql:5.7
+        ports:
+            - "3306:3306"
+        volumes:
+            - ./resources/mariadb/files/:/var/lib/mysql
+            - ./resources/mariadb/logs/:/var/log/mysql/
+            - ./resources/mariadb/backups/:/root/backups/
+        environment:
+            MYSQL_ROOT_PASSWORD:  9f7Ai7fSFimWISU5SX6vf8la9XBKEkZTiKq78i0Px8
+            MYSQL_DATABASE: test_project_development
+            MYSQL_USER: test_project
+            MYSQL_PASSWORD: Jp7NfgMNzsZlJlXrrSU4InjaNyMJKSKad0SH1NuGY
+    apache:
+        image: psolutions/debian-apache
+        container_name: apache
+        hostname: apache.localhost
+        stdin_open: true
+        tty: true
+        ports:
+            - 80:80
+        volumes:
+            - ./resources/apache/config/:/etc/apache2/sites-available
+            - ./public/:/opt/app
+        entrypoint:
+#            - /bin/sh
+            - /usr/sbin/apache2ctl
+            - "-D"
+            - "FOREGROUND"
+    phpmyadmin_test_project:
+        container_name: phpmyadmin_test_project
+        hostname: phpmyadmin_test_project
+        image: phpmyadmin/phpmyadmin
+        #image: mysql
+        ports:
+            - "8181:80"
+        environment:
+             PMA_HOST: mariadb_test_project
+        depends_on:
+            - mariadb_test_project
